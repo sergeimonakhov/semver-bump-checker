@@ -1,0 +1,12 @@
+[package]
+name = "sbc"
+version = "0.1.0"
+authors = ["Sergei Monakhov <sergey.monakhov@gmail.com>"]
+description = "Checks if the current semver version is greater than the version in the previous commit"
+edition = "2021"
+
+[dependencies]
+git2 = "0.18.3"
+serde_json = "1.0.115"
+semver = "1.0.22"
+clap = { version = "4.5.4", features = ["derive"] }
