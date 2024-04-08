@@ -1,6 +1,6 @@
 [package]
 name = "sbc"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Sergei Monakhov <sergey.monakhov@gmail.com>"]
 description = "Checks if the current semver version is greater than the version in the previous commit"
 edition = "2021"
