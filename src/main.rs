@@ -17,6 +17,10 @@ struct Cli {
 enum Commands {
     /// Use for JSON version file
     Json {
+        /// Sets the target branch
+        #[arg(short = 'f', long, default_value = "HEAD")]
+        branch_name: String,
+
         /// Sets the JSON file
         #[arg(short = 'f', long)]
         file: String,
@@ -27,6 +31,10 @@ enum Commands {
     },
     /// Use for plain version file
     Plain {
+        /// Sets the target branch
+        #[arg(short = 'f', long)]
+        branch_name: String,
+
         /// Sets the plain text file
         #[arg(short = 'f', long)]
         file: String,
@@ -40,12 +48,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match &cli.command {
         // Handling JSON version file subcommand
-        Some(Commands::Json { file, key }) => {
-            compare_versions::<JsonVersionFile>(&repo, file, key)?;
+        Some(Commands::Json { branch_name, file, key }) => {
+            compare_versions::<JsonVersionFile>(&repo, branch_name, file, key)?;
         }
         // Handling plain version file subcommand
-        Some(Commands::Plain { file }) => {
-            compare_versions::<TextVersionFile>(&repo, file, "")?;
+        Some(Commands::Plain { branch_name, file }) => {
+            compare_versions::<TextVersionFile>(&repo, branch_name, file, "")?;
         }
         // No subcommand provided
         None => {}
@@ -119,11 +127,12 @@ fn determine_file_type(file_path: &str) -> Option<String> {
 }
 
 // Function to get version from previous commit
-fn get_version_from_previous_commit<F: VersionFile>(repo: &Repository, file: &str, key: &str) -> Result<Version, Box<dyn Error>> {
-
-    let head = repo.head()?.peel_to_commit()?;
-    let previous_commit = head.parent(0)?; // Get the first parent (previous commit)
-    let tree = previous_commit.tree()?;
+fn get_version_from_previous_commit<F: VersionFile>(repo: &Repository, branch_name: &str, file: &str, key: &str) -> Result<Version, Box<dyn Error>> {
+    // Resolve the reference for the specified branch
+    let branch_ref_name = format!("refs/remotes/origin/{}", branch_name);
+    let branch_ref = repo.find_reference(&branch_ref_name)?;
+    let branch_commit = branch_ref.peel_to_commit()?;
+    let tree = branch_commit.tree()?;
     let file_name = tree.get_name(file)
         .ok_or("File not found in previous commit")?;
     let object = file_name.to_object(&repo)?;
@@ -149,7 +158,7 @@ fn get_version_from_previous_commit<F: VersionFile>(repo: &Repository, file: &st
 }
 
 // Function to compare current and previous versions
-fn compare_versions<F: VersionFile>(repo: &Repository, file: &str, key: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn compare_versions<F: VersionFile>(repo: &Repository, branch_name: &str, file: &str, key: &str) -> Result<(), Box<dyn std::error::Error>> {
     let file_type = determine_file_type(file);
     let current_version = match file_type {
         Some(file_type) => {
@@ -164,7 +173,7 @@ fn compare_versions<F: VersionFile>(repo: &Repository, file: &str, key: &str) ->
         }
     };
 
-    let previous_commit_version = get_version_from_previous_commit::<F>(repo, file, key)?;
+    let previous_commit_version = get_version_from_previous_commit::<F>(repo, branch_name, file, key)?;
     if previous_commit_version >= current_version {
         return Err(format!("Current version ({}) is not greater than previous version ({}) 🦆", current_version, previous_commit_version).into());
     }
