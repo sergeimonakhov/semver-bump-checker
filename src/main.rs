@@ -120,8 +120,9 @@ fn determine_file_type(file_path: &str) -> Option<String> {
 
 // Function to get version from previous commit
 fn get_version_from_previous_commit<F: VersionFile>(repo: &Repository, file: &str, key: &str) -> Result<Version, Box<dyn Error>> {
-    let head = repo.head()?.target().ok_or("Head not found")?;
-    let previous_commit = repo.find_commit(head)?;
+
+    let head = repo.head()?.peel_to_commit()?;
+    let previous_commit = head.parent(0)?; // Get the first parent (previous commit)
     let tree = previous_commit.tree()?;
     let file_name = tree.get_name(file)
         .ok_or("File not found in previous commit")?;
