@@ -175,7 +175,7 @@ fn compare_versions<F: VersionFile>(repo: &Repository, branch_name: &str, file: 
 
     let previous_commit_version = get_version_from_previous_commit::<F>(repo, branch_name, file, key)?;
     if previous_commit_version >= current_version {
-        return Err(format!("Current version ({}) is not greater than previous version ({}) 🦆", current_version, previous_commit_version).into());
+        return Err(format!("Current version ({}) is not greater than previous version ({}) on ({}) branch 🦆", current_version, previous_commit_version, branch_name).into());
     }
     println!("Current version is greater than the previous one 🚀🚀🚀");
     Ok(())
